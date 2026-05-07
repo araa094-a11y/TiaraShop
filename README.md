@@ -1,2 +1,2 @@
 # TiaraShop
-Dasoard toko online
+Dasboard toko online
