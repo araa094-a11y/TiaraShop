@@ -1,4 +1,4 @@
 <?php
-$conn = mysqli_connect("localhost","root","barang_25550014")
+$conn = mysqli_connect("localhost","root", '',"25550014")
 
 ?>

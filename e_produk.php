@@ -1,32 +1,63 @@
 <?php
 include "koneksi.php";
+$id = $_GET['id'];
+$query = mysqli_query($conn, "SELECT * FROM products WHERE id='$id'");
+$hasil = mysqli_fetch_array($query);
+if (isset($_POST['update'])) {
 
-$auto = mysqli_query($conn, "select max(kd_kat) as max_code from categories");
-$hasil = mysqli_fetch_array($auto);
-$code = $hasil['max_code'];
-if ($code == NULL) {
-    $urutan = 0;
-} else {
-    $urutan = (int) substr($code, 1, 3);
-}
-$urutan++;
-$huruf = "K";
-$kd_kat = $huruf . sprintf("%03s", $urutan);
+    $nm_produk   = $_POST['nm_produk'];
+    $stok        = $_POST['stok'];
+    $min_stok    = $_POST['min_stok'];
+    $harga       = $_POST['harga'];
+    $id_kategori = $_POST['id_kategori'];
 
-if (isset($_POST['simpan'])) {
-    $nm_kat = $_POST['nm_kat'];
+    $imgfile = $_FILES['gambar']['name'];
 
-    $query = mysqli_query($conn, "INSERT INTO categories(kd_kat, category_name) VALUES ('$kd_kat', '$nm_kat')");
-    if ($query) {
-        echo "<script>alert('Data berhasil ditambahkan!')</script>";
-        header("refresh:0, kategori_produk.php");
+    // kalau upload gambar baru
+    if ($imgfile != "") {
+
+        $tmp       = $_FILES['gambar']['tmp_name'];
+        $ext       = strtolower(pathinfo($imgfile, PATHINFO_EXTENSION));
+        $allowed   = ['jpg', 'jpeg', 'png', 'webp'];
+
+        if (in_array($ext, $allowed)) {
+
+            $imgnew = md5(time() . $imgfile) . "." . $ext;
+            move_uploaded_file($tmp, "produk_img/" . $imgnew);
+
+            $update = mysqli_query($conn, "UPDATE products SET
+                category_id = '$id_kategori',
+                product_name = '$nm_produk',
+                stock = '$stok',
+                min_stock = '$min_stok',
+                price = '$harga',
+                gambar = '$imgnew'
+                WHERE id = '$id'
+            ");
+        } else {
+            echo "<script>alert('Format gambar tidak valid');</script>";
+            return;
+        }
     } else {
-        echo "<script>alert('Data gagal ditambahkan!')</script>";
-        header("refresh:0, kategori_produk.php");
+        // tanpa ganti gambar
+        $update = mysqli_query($conn, "UPDATE products SET
+            category_id = '$id_kategori',
+            product_name = '$nm_produk',
+            stock = '$stok',
+            min_stock = '$min_stok',
+            price = '$harga'
+            WHERE id = '$id'
+        ");
+    }
+    if ($update) {
+        echo "<script>alert('Data berhasil diubah!')</script>";
+        header("refresh:0, produk.php");
+    } else {
+        echo "<script>alert('Data gagal diubah!')</script>";
+        header("refresh:0, produk.php");
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 
@@ -34,7 +65,7 @@ if (isset($_POST['simpan'])) {
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1.0" name="viewport">
 
-    <title>Kategori Produk- TiaraShop</title>
+    <title>Data Produk - Tiarashop</title>
     <meta content="" name="description">
     <meta content="" name="keywords">
 
@@ -73,12 +104,8 @@ if (isset($_POST['simpan'])) {
             <i class="bi bi-list toggle-sidebar-btn"></i>
         </div><!-- End Logo -->
 
-
         <nav class="header-nav ms-auto">
             <ul class="d-flex align-items-center">
-
-
-                <li class="nav-item dropdown pe-3">
 
                     <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
                         <img src="assets/img/profile-img.jpg" alt="Profile" class="rounded-circle">
@@ -160,7 +187,7 @@ if (isset($_POST['simpan'])) {
             <li class="nav-item">
                 <a class="nav-link collapsed" href="produk.php">
                     <i class="bi bi-question-circle"></i>
-                    <span>Data Produk</span>
+                    <span>Data_Produk</span>
                 </a>
             </li><!-- End F.A.Q Page Nav -->
 
@@ -174,69 +201,93 @@ if (isset($_POST['simpan'])) {
             <li class="nav-item">
                 <a class="nav-link collapsed" href="users.php">
                     <i class="bi bi-card-list"></i>
-                    <span>Manejemn User</span>
+                    <span>Manajemen User</span>
                 </a>
             </li><!-- End Register Page Nav -->
-
         </ul>
 
     </aside><!-- End Sidebar-->
 
-
-
     <main id="main" class="main">
 
         <div class="pagetitle">
-            <h1>Kategori Produk</h1>
+            <h1>Data Produk</h1>
             <nav>
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="index.php">Dashboard</a></li>
-                    <li class="breadcrumb-item">Kategori Produk</li>
-                    <li class="breadcrumb-item active">Tambah</li>
+                    <li class="breadcrumb-item">Data Produk</li>
+                    <li class="breadcrumb-item active">Edit</li>
                 </ol>
             </nav>
         </div><!-- End Page Title -->
         <section class="section">
-            <div class="row">
-                <div class="col-lg-6">
 
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Edit Data Produk</h5>
 
+                            <!-- Vertical Form -->
+                            <form class="row g-3" method="post" enctype="multipart/form-data">
+                                <div class="col-12">
+                                    <label for="kd_produk" class="form-label">Kode Produk</label>
+                                    <input type="text" class="form-control" id="kd_produk" name="kd_produk" value="<?php echo $hasil['product_code']; ?>" readonly>
+                                </div>
 
+                                <div class="col-12">
+                                    <label for="nm_produk" class="form-label">Nama Produk</label>
+                                    <input type="text" class="form-control" id="nm_produk" name="nm_produk" value="<?php echo $hasil['product_name']; ?>" required>
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="stok" class="form-label">Stok</label>
+                                    <input type="number" class="form-control" id="stok" name="stok" value="<?php echo $hasil['stock']; ?>" required>
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="min_stok" class="form-label">Minimal Stok</label>
+                                    <input type="number" class="form-control" id="min_stok" name="min_stok" value="<?php echo $hasil['min_stock']; ?>" required>
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="harga" class="form-label">Harga</label>
+                                    <input type="number" class="form-control" id="harga" name="harga" value="<?php echo $hasil['price']; ?>" required>
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="id_kategori" class="form-label">Kategori</label>
+                                    <select class="form-control" id="id_kategori" name="id_kategori" required>
+                                        <?php
+                                        $kategori = mysqli_query($conn, "SELECT * FROM categories");
+                                        while ($k = mysqli_fetch_array($kategori)) {
+                                            $selected = ($k['id'] == $hasil['category_id']) ? "selected" : "";
+                                            echo "<option value='{$k['id']}' $selected>{$k['category_name']}</option>";
+                                        }
+                                        ?>
+                                    </select>
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label">Gambar Lama</label><br>
+                                    <img src="produk_img/<?php echo $hasil['gambar']; ?>" width="80">
+                                </div>
+
+                                <div class="col-12">
+                                    <label for="gambar" class="form-label">Ganti Gambar</label>
+                                    <input type="file" class="form-control" id="gambar" name="gambar" accept="image/*">
+                                </div>
+
+                                <div class="text-center">
+                                    <button type="button" class="btn btn-warning">
+                                        <a href="produk.php" style="color: black; text-decoration:none;">Kembali</a>
+                                    </button>
+                                    <button type="reset" class="btn btn-secondary">Reset</button>
+                                    <button type="submit" class="btn btn-success" name="update">Update</button>
+                                </div>
+                            </form>
+
+                        </div>
+                    </div>
                 </div>
-            </div>
-
-            </div>
-
-            <div class="col-lg-6">
-
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">tambah kategori produk</h5>
-
-                        <!-- Vertical Form -->
-                        <form class="row g-3" method="post">
-                            <div class="col-12">
-                                <label for="kd_kat" class="form-label">Kode kategori</label>
-                                <input type="text" class="form-control" id="kd_kat" name="kd_kat" value="<?php echo $kd_kat; ?>" readonly>
-                            </div>
-                            <div class="col-12">
-                                <label for="nm_kat" class="form-label">Nama kategori</label>
-                                <input type="text" class="form-control" id="nm_kat" name="nm_kat" required>
-                            </div>
-
-                            <div class="text-center">
-                                <button type="button" class="btn btn-warning"><a href="kategori_produk.php" style="color: black; text-decoration:none;">Kembali</a></button>
-                                <button type="reset" class="btn btn-secondary">Reset</button>
-                                <button type="submit" class="btn btn-success" name="simpan">simpan</button>
-                            </div>
-                        </form><!-- Vertical Form -->
-
-                    </div>
-                </div
-                    </div>
-            </div>
-
-            </div>
             </div>
         </section>
 
@@ -245,14 +296,10 @@ if (isset($_POST['simpan'])) {
     <!-- ======= Footer ======= -->
     <footer id="footer" class="footer">
         <div class="copyright">
-            &copy; Copyright <strong><span>NiceAdmin</span></strong>. All Rights Reserved
+            &copy; Copyright <strong><span>Nama Sistem</span></strong>. All Rights Reserved
         </div>
         <div class="credits">
-            <!-- All the links in the footer should remain intact. -->
-            <!-- You can delete the links only if you purchased the pro version. -->
-            <!-- Licensing information: https://bootstrapmade.com/license/ -->
-            <!-- Purchase the pro version with working PHP/AJAX contact form: https://bootstrapmade.com/nice-admin-bootstrap-admin-html-template/ -->
-            Designed by <a href="https://bootstrapmade.com/">BootstrapMade</a>
+            Designed by <a href="">Nama Kalian</a>
         </div>
     </footer><!-- End Footer -->
 
