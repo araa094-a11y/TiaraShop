@@ -190,7 +190,7 @@ if (isset($_POST['simpan'])) {
             <h1>Kategori Produk</h1>
             <nav>
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="index.php">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="index.php"></a></li>
                     <li class="breadcrumb-item">Kategori Produk</li>
                     <li class="breadcrumb-item active">Tambah</li>
                 </ol>
@@ -200,12 +200,6 @@ if (isset($_POST['simpan'])) {
             <div class="row">
                 <div class="col-lg-6">
 
-
-
-                </div>
-            </div>
-
-            </div>
 
             <div class="col-lg-6">
 
