@@ -1,37 +1,47 @@
 <?php
+session_start();
+include "koneksi.php";
+
+// cek apakah usr sudah login
+if (!isset($_SESSION["login"])) {
+    header("location: login.php");
+    exit;
+}
+?>
+<?php
 include "koneksi.php";
 
 if (isset($_POST['simpan'])) {
 
-  $name     = mysqli_real_escape_string($conn, $_POST['name']);
-  $email    = mysqli_real_escape_string($conn, $_POST['email']);
-  $password = $_POST['password'];
-  $role     = $_POST['role'];
-  $is_active = $_POST['is_active'];
+    $name      = mysqli_real_escape_string($conn, $_POST['name']);
+    $email     = mysqli_real_escape_string($conn, $_POST['email']);
+    $password  = $_POST['password'];
+    $role      = $_POST['role'];
+    $is_active = $_POST['is_active'];
 
-  // validasi email tidak boleh sama
-  $cek = mysqli_query($conn, "SELECT * FROM users WHERE email='$email'");
-  if (mysqli_num_rows($cek) > 0) {
-    echo "<script>alert('Email sudah terdaftar!'); window.location='users.php';</script>";
-    exit;
-  }
-}
-// hash password
-if (!empty($password)) {
-  $password_hash = password_hash($password, PASSWORD_DEFAULT);
-} else {
-  echo "<script>alert('Password wajib diisi!'); window.location='user.php';</script>";
-  exit;
-}
+    // validasi email tidak boleh sama
+    $cek = mysqli_query($conn, "SELECT * FROM users WHERE email='$email'");
+    if (mysqli_num_rows($cek) > 0) {
+        echo "<script>alert('Email sudah terdaftar!'); window.location='users.php';</script>";
+        exit;
+    }
 
-// insert data
-$query = mysqli_query($conn, "INSERT INTO users (name, email, password, role, is_active)
-VALUES ('$name', '$email', '$password_hash', '$role', '$is_active')");
+    // hash password
+    if (!empty($password)) {
+        $password_hash = password_hash($password, PASSWORD_DEFAULT);
+    } else {
+        echo "<script>alert('Password wajib diisi!'); window.location='users.php';</script>";
+        exit;
+    }
 
-if ($query) {
-  echo "<script>alert('User berhasil ditambahkan!'); window.location='users.php';</script>";
-} else {
-  echo "<script>alert('User gagal ditambahkan!'); window.location='users.php';</script>";
+    // insert data
+    $query = mysqli_query($conn, "INSERT INTO users (name, email, password, role, is_active) VALUES ('$name', '$email', '$password_hash', '$role', '$is_active')");
+
+    if ($query) {
+        echo "<script>alert('User berhasil ditambahkan!'); window.location='users.php';</script>";
+    } else {
+        echo "<script>alert('User gagal ditambahkan!'); window.location='users.php';</script>";
+    }
 }
 ?>
 
@@ -83,63 +93,38 @@ if ($query) {
 
         <nav class="header-nav ms-auto">
             <ul class="d-flex align-items-center">
+                <li class="nav-item dropdown pe-3">
+                    <a
+                        class="nav-link nav-profile d-flex align-items-center pe-0"
+                        href="#"
+                        data-bs-toggle="dropdown">
+                        <img
+                            src="assets/img/profile-img.jpg"
+                            alt="Profile"
+                            class="rounded-circle" /> </a><!-- End Profile Iamge Icon -->
 
-                <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
-                    <img src="assets/img/profile-img.jpg" alt="Profile" class="rounded-circle">
-                </a><!-- End Profile Iamge Icon -->
+                    <ul
+                        class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
+                        <li class="dropdown-header">
+                            <h6><?php echo isset($_SESSION['name']) ? $_SESSION['name'] : 'User'; ?></h6>
+                            <span><?php echo isset($_SESSION['role']) ? $_SESSION['role'] : 'Role'; ?></span>
+                        </li>
+                        <li>
+                            <hr class="dropdown-divider" />
+                        </li>
 
-                <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
-                    <li class="dropdown-header">
-                        <h6>Kevin Anderson</h6>
-                        <span>Web Designer</span>
-                    </li>
-                    <li>
-                        <hr class="dropdown-divider">
-                    </li>
-
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center" href="users-profile.html">
-                            <i class="bi bi-person"></i>
-                            <span>My Profile</span>
-                        </a>
-                    </li>
-                    <li>
-                        <hr class="dropdown-divider">
-                    </li>
-
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center" href="users-profile.html">
-                            <i class="bi bi-gear"></i>
-                            <span>Account Settings</span>
-                        </a>
-                    </li>
-                    <li>
-                        <hr class="dropdown-divider">
-                    </li>
-
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center" href="pages-faq.html">
-                            <i class="bi bi-question-circle"></i>
-                            <span>Need Help?</span>
-                        </a>
-                    </li>
-                    <li>
-                        <hr class="dropdown-divider">
-                    </li>
-
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center" href="#">
-                            <i class="bi bi-box-arrow-right"></i>
-                            <span>Sign Out</span>
-                        </a>
-                    </li>
-
-                </ul><!-- End Profile Dropdown Items -->
-                </li><!-- End Profile Nav -->
-
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center" href="logout.php">
+                                <i class="bi bi-box-arrow-right"></i>
+                                <span>Sign Out</span>
+                            </a>
+                        </li>
+                    </ul>
+                    <!-- End Profile Dropdown Items -->
+                </li>
+                <!-- End Profile Nav -->
             </ul>
-        </nav><!-- End Icons Navigation -->
-
+        </nav>
     </header><!-- End Header -->
 
     <!-- ======= Sidebar ======= -->
@@ -205,20 +190,23 @@ if ($query) {
                         <div class="card-body">
                             <h5 class="card-title">Tambah User</h5>
 
-                            <!-- Vertical Form -->
-                            <form class="row g-3">
+
+                            <form class="row g-3" method="post">
                                 <div class="col-12">
                                     <label for="inputNanme4" class="form-label">Nama</label>
                                     <input type="text" class="form-control" id="name" name="name" required>
                                 </div>
+
                                 <div class="col-12">
                                     <label for="email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="email" name="email" required>>
+                                    <input type="email" class="form-control" id="email" name="email" required>
                                 </div>
+
                                 <div class="col-12">
                                     <label for="password" class="form-label">Password</label>
                                     <input type="password" class="form-control" id="password" name="password">
                                 </div>
+
                                 <div class="col-12">
                                     <label for="role" class="form-label">Role</label>
                                     <select class="form-control" name="role" required>
@@ -227,6 +215,7 @@ if ($query) {
                                         <option value="staff">Staff</option>
                                     </select>
                                 </div>
+
                                 <div class="col-12">
                                     <label for="is_active" class="form-label">Status</label>
                                     <select class="form-control" name="is_active">
@@ -234,6 +223,7 @@ if ($query) {
                                         <option value="0">Nonaktif</option>
                                     </select>
                                 </div>
+
                                 <div class="text-center">
                                     <button type="button" class="btn btn-warning">
                                         <a href="users.php" style="color: black; text-decoration:none;">Kembali</a>
@@ -246,13 +236,7 @@ if ($query) {
 
                         </div>
                     </div>
-                    </form><!-- Vertical Form -->
 
-                </div>
-            </div>
-            </div>
-            </div>
-        </section>
 
     </main><!-- End #main -->
 

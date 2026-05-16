@@ -1,4 +1,15 @@
 <?php
+session_start();
+include "koneksi.php";
+
+// cek apakah usr sudah login
+if (!isset($_SESSION["login"])) {
+    header("location: login.php");
+    exit;
+}
+?>
+
+<?php
 include "koneksi.php";
 $id = $_GET['id'];
 $sql = mysqli_query($conn, "SELECT * FROM categories WHERE id = '$id'");

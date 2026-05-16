@@ -1,36 +1,84 @@
+<?php
+include "koneksi.php";
+
+if (isset($_POST['submit'])) {
+  $product_id = $_POST['product_id'];
+  $change_type = $_POST['change_type'];
+  $qty = intval($_POST['qty']);
+  $note = $_POST['note'];
+  $user_id = $_SESSION['user_id'];
+
+  // ambil stok sekarang
+  $q = mysqli_query($conn, "SELECT stock FROM products WHERE id='$product_id'");
+  $data = mysqli_fetch_assoc($q);
+  $stock_before = $data['stock'];
+
+  // hitung stok baru
+  if ($change_type == "ADD") {
+    $stock_after = $stock_before + $qty;
+  } else {
+    $stock_after = $stock_before - $qty;
+  }
+
+  if ($stock_after < 0) {
+    echo "<script>alert('Stok tidak cukup!');</script>";
+    echo "<script>alert('Stok tidak cukup!');</script>";
+exit;
+}
+
+// update stok
+mysqli_query($conn, "UPDATE products SET stock='$stock_after' WHERE id='$product_id'");
+
+// insert log
+mysqli_query($conn, "INSERT INTO stock_logs
+  (product_id, change_type, qty, stock_before, stock_after, note, created_by)
+  VALUES
+  ('$product_id', '$change_type', '$qty', '$stock_before', '$stock_after', '$note', '$user_id')
+");
+
+header("Location: stok.php?success=1");
+exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="utf-8">
   <meta content="width=device-widht, intial-scale=1.0" name="viewport">
-<title>Dashboard - Sistem Penjualan</title>
-<meta content="" name="description">
-<meta content="" name="keywords">
+  <title>Dashboard - Sistem Penjualan</title>
+  <meta content="" name="description">
+  <meta content="" name="keywords">
 
-<!-- Favicons -->
-<link href="assets/img/favicon.png" rel="icon">
-<link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon">
+  <!-- Favicons -->
+  <link href="assets/img/favicon.png" rel="icon">
+  <link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon">
 
-<!-- Google Fonts -->
-<link href="https://fonts.gstatic.com" rel="preconnect">
-<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
+  <!-- Google Fonts -->
+  <link href="https://fonts.gstatic.com" rel="preconnect">
+  <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Nunito:300,300i,400,400i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet">
 
-<!-- Vendor CSS Files -->
-<link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-<link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
-<link href="assets/vendor/boxicons/css/boxicons.min.css" rel="stylesheet">
-<link href="assets/vendor/quill/quill.snow.css" rel="stylesheet">
-<link href="assets/vendor/quill/quill.bubble.css" rel="stylesheet">
-<link href="assets/vendor/remixicon/remixicon.css" rel="stylesheet">
-<link href="assets/vendor/simple-datatables/style.css" rel="stylesheet">
+  <!-- Vendor CSS Files -->
+  <link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+  <link href="assets/vendor/boxicons/css/boxicons.min.css" rel="stylesheet">
+  <link href="assets/vendor/quill/quill.snow.css" rel="stylesheet">
+  <link href="assets/vendor/quill/quill.bubble.css" rel="stylesheet">
+  <link href="assets/vendor/remixicon/remixicon.css" rel="stylesheet">
+  <link href="assets/vendor/simple-datatables/style.css" rel="stylesheet">
 
-<!-- Template Main CSS File -->
-<link href="assets/css/style.css" rel="stylesheet">
+  <!-- Template Main CSS File -->
+  <link href="assets/css/style.css" rel="stylesheet">
 
 </head>
 
 <body>
+  <?php if (isset($_GET['success'])): ?>
+<script>
+  alert('Stok berhasil diperbarui!');
+</script>
+<?php endif; ?>
+
 
   <!-- ======= Header ======= -->
   <header id="header" class="header fixed-top d-flex align-items-center">
@@ -46,65 +94,38 @@
 
     <nav class="header-nav ms-auto">
       <ul class="d-flex align-items-center">
-
-
         <li class="nav-item dropdown pe-3">
+          <a
+            class="nav-link nav-profile d-flex align-items-center pe-0"
+            href="#"
+            data-bs-toggle="dropdown">
+            <img
+              src="assets/img/profile-img.jpg"
+              alt="Profile"
+              class="rounded-circle" /> </a><!-- End Profile Iamge Icon -->
 
-          <a class="nav-link nav-profile d-flex align-items-center pe-0" href="#" data-bs-toggle="dropdown">
-            <img src="assets/img/profile-img.jpg" alt="Profile" class="rounded-circle">
-          </a><!-- End Profile Iamge Icon -->
-
-          <ul class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
+          <ul
+            class="dropdown-menu dropdown-menu-end dropdown-menu-arrow profile">
             <li class="dropdown-header">
-              <h6>Kevin Anderson</h6>
-              <span>Web Designer</span>
+              <h6><?php echo isset($_SESSION['name']) ? $_SESSION['name'] : 'User'; ?></h6>
+              <span><?php echo isset($_SESSION['role']) ? $_SESSION['role'] : 'Role'; ?></span>
             </li>
             <li>
-              <hr class="dropdown-divider">
-            </li>
-
-            <li>
-              <a class="dropdown-item d-flex align-items-center" href="users-profile.html">
-                <i class="bi bi-person"></i>
-                <span>My Profile</span>
-              </a>
-            </li>
-            <li>
-              <hr class="dropdown-divider">
+              <hr class="dropdown-divider" />
             </li>
 
             <li>
-              <a class="dropdown-item d-flex align-items-center" href="users-profile.html">
-                <i class="bi bi-gear"></i>
-                <span>Account Settings</span>
-              </a>
-            </li>
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-
-            <li>
-              <a class="dropdown-item d-flex align-items-center" href="pages-faq.html">
-                <i class="bi bi-question-circle"></i>
-                <span>Need Help?</span>
-              </a>
-            </li>
-            <li>
-              <hr class="dropdown-divider">
-            </li>
-
-            <li>
-              <a class="dropdown-item d-flex align-items-center" href="#">
+              <a class="dropdown-item d-flex align-items-center" href="logout.php">
                 <i class="bi bi-box-arrow-right"></i>
                 <span>Sign Out</span>
               </a>
             </li>
-
-          </ul><!-- End Profile Dropdown Items -->
-        </li><!-- End Profile Nav -->
-
+          </ul>
+          <!-- End Profile Dropdown Items -->
+        </li>
+        <!-- End Profile Nav -->
       </ul>
-    </nav><!-- End Icons Navigation -->
+    </nav>
 
   </header><!-- End Header -->
 
@@ -158,75 +179,75 @@
       <h1>Data Produk</h1>
       <nav>
         <ol class="breadcrumb">
-          <li class="breadcrumb-item"><a href="index.php">Dasbrod</a></li>
+          <li class="breadcrumb-item"><a href="index.php">Dasboard</a></li>
           <li class="breadcrumb-item active">Data Produk </li>
         </ol>
       </nav>
     </div><!-- End Page Title -->
-   <div class="row">
-            <div class="col-lg-12">
+    <div class="row">
+      <div class="col-lg-12">
 
-                <div class="card">
-                    <div class="card-body mt-3">
-                        <a href="t_produk.php" class="btn btn-primary">Tambah Data</a>
-                        <a href="stok.php" class="btn btn-dark">Stok</a>
-                    </div>
-                </div>
-            </div>
+        <div class="card">
+          <div class="card-body mt-3">
+            <a href="t_produk.php" class="btn btn-primary">Tambah Data</a>
+            <a href="stock.php" class="btn btn-dark">Stok</a>
+          </div>
         </div>
+      </div>
+    </div>
 
-        <section class="section">
-            <div class="row">
-                <div class="col-lg-12">
+    <section class="section">
+      <div class="row">
+        <div class="col-lg-12">
 
-                    <div class="card">
-                        <div class="card-body mt-3">
-                            <!-- Table with stripped rows -->
-                            <table class="table datatable">
-                                <thead>
-                                    <tr>
-                                        <th scope="col">No</th>
-                                        <th scope="col">Kode Produk</th>
-                                        <th scope="col">Nama Produk</th>
-                                        <th scope="col">Kategori</th>
-                                        <th scope="col">Stok</th>
-                                        <th scope="col">Harga</th>
-                                        <th scope="col">Gambar</th>
-                                        <th scope="col">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php
-                                    include "koneksi.php";
-                                    $no = 1;
+          <div class="card">
+            <div class="card-body mt-3">
+              <!-- Table with stripped rows -->
+              <table class="table datatable">
+                <thead>
+                  <tr>
+                    <th scope="col">No</th>
+                    <th scope="col">Kode Produk</th>
+                    <th scope="col">Nama Produk</th>
+                    <th scope="col">Kategori</th>
+                    <th scope="col">Stok</th>
+                    <th scope="col">Harga</th>
+                    <th scope="col">Gambar</th>
+                    <th scope="col">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php
+                  include "koneksi.php";
+                  $no = 1;
 
-                                    // ambil data produk + nama kategori
-                                    $sql = mysqli_query($conn, "
+                  // ambil data produk + nama kategori
+                  $sql = mysqli_query($conn, "
     SELECT p.*, c.category_name 
     FROM products p
     LEFT JOIN categories c ON p.category_id = c.id
 ");
 
-                                    while ($data = mysqli_fetch_array($sql)) {
-                                    ?>
-                                        <tr>
-                                            <td><?php echo $no++; ?></td>
-                                            <td><?php echo $data['product_code']; ?></td>
-                                            <td><?php echo $data['product_name']; ?></td>
-                                            <td><?php echo $data['category_name']; ?></td>
-                                            <td><?php echo $data['stock']; ?></td>
-                                            <td>Rp <?php echo number_format($data['price'], 0, ',', '.'); ?></td>
-                                            <td>
-                                                <img src="produk_img/<?php echo $data['gambar']; ?>" width="60">
-                                            </td>
-                                            <td>
-                                                <a href="e_produk.php?id=<?php echo $data['id']; ?>" class="btn btn-warning">Edit</a>
-                                                <a href="h_produk.php?id=<?php echo $data['id']; ?>" class="btn btn-danger" onclick="return confirm('Apakah Anda Yakin Ingin Menghapus Data?')">Hapus</a>
-                                            </td>
-                                        </tr>
-                                    <?php } ?>
-                                </tbody>
-                            </table>
+                  while ($data = mysqli_fetch_array($sql)) {
+                  ?>
+                    <tr>
+                      <td><?php echo $no++; ?></td>
+                      <td><?php echo $data['product_code']; ?></td>
+                      <td><?php echo $data['product_name']; ?></td>
+                      <td><?php echo $data['category_name']; ?></td>
+                      <td><?php echo $data['stock']; ?></td>
+                      <td>Rp <?php echo number_format($data['price'], 0, ',', '.'); ?></td>
+                      <td>
+                        <img src="produk_img/<?php echo $data['gambar']; ?>" width="60">
+                      </td>
+                      <td>
+                        <a href="e_produk.php?id=<?php echo $data['id']; ?>" class="btn btn-warning">Edit</a>
+                        <a href="h_produk.php?id=<?php echo $data['id']; ?>" class="btn btn-danger" onclick="return confirm('Apakah Anda Yakin Ingin Menghapus Data?')">Hapus</a>
+                      </td>
+                    </tr>
+                  <?php } ?>
+                </tbody>
+              </table>
               <!-- End Table with stripped rows -->
 
 
